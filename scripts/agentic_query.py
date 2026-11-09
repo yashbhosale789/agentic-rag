@@ -22,13 +22,15 @@ def print_trajectory(trajectory: list[dict]) -> None:
     for step in trajectory:
         print(f"\n--- Iteration {step['iteration']} ---")
         print(step["raw"])
+        if "grade" in step:
+            print(f"[grader: chunks relevant = {step['grade']}]")
     print("\n" + "=" * 60)
 
 
 def main() -> None:
     print("Select agent:")
-    print("  1 — Manual ReAct agent")
-    print("  2 — LangChain AgentExecutor")
+    print("  1 — LangGraph ReAct agent with relevance grader")
+    print("  2 — LangChain create_agent (prebuilt LangGraph tool calling)")
     choice = input("Enter 1 or 2: ").strip()
 
     if choice not in ("1", "2"):

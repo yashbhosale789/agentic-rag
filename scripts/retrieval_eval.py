@@ -11,10 +11,11 @@ Two runs:
   default  ($0, no LLM call): the agent's retrieve tool on the raw question, every stage scored
            (dense, bm25, fused, reranked); the tool's LLM rewrite is skipped.
            -> eval/retrieval_results.json
-  --agent  (LLM calls): the ReAct agent (src/agent/react_agent.py) answers each question and every
-           retrieve call it makes is captured. Scored: agent_first (the first call's reranked
-           top 5) and agent_all (the chunks of all calls; recall@all = any chunk the agent saw).
-           Also recorded: tool calls, LLM calls and tokens, latency, outcome, answer.
+  --agent  (LLM calls): the LangGraph ReAct agent (src/agent/react_agent.py) answers each question
+           and every retrieve call it makes is captured. Scored: agent_first (the first call's
+           reranked top 5) and agent_all (the chunks of all calls; recall@all = any chunk the agent
+           saw). Also recorded: tool calls, grader verdicts, LLM calls (agent / rewrite / grade) and
+           tokens, latency, outcome, answer.
            -> eval/agent_results.json, saved after every question; a re-run skips saved ones.
            A provider error (e.g. 429) discards that question, waits 60 s and retries once;
            a second error stops the run (re-run later to resume).
@@ -97,6 +98,7 @@ def run_agent_eval(items: list[dict], ids: dict, settings: dict, out: Path, limi
 
     import src.agent.tools as tools
     from config import REWRITE_SYSTEM
+    from src.agent.prompts import GRADE_SYSTEM
     from src.agent.react_agent import run_agent
     from src.embedding.embedder import embed_query
     from src.llm import client
@@ -116,8 +118,9 @@ def run_agent_eval(items: list[dict], ids: dict, settings: dict, out: Path, limi
         t = time.perf_counter()
         r = real_post(url, *a, **kw)
         usage = r.json().get("usage", {}) if r.ok else {}
+        system = kw["json"]["messages"][0]["content"]
         calls.append({
-            "role": "rewrite" if kw["json"]["messages"][0]["content"] == REWRITE_SYSTEM else "agent",
+            "role": {REWRITE_SYSTEM: "rewrite", GRADE_SYSTEM: "grade"}.get(system, "agent"),
             "status": r.status_code,
             "ms": round((time.perf_counter() - t) * 1000),
             "prompt_tokens": usage.get("prompt_tokens", 0),
@@ -167,12 +170,14 @@ def run_agent_eval(items: list[dict], ids: dict, settings: dict, out: Path, limi
                 "iterations": result["iterations"],
                 "tool_calls": [{"tool": s["action"], "input": s["action_input"]} for s in steps if s["type"] == "action"],
                 "retrieve_queries": [q for q, _ in seen],  # after the tool's LLM rewrite
+                "grades": [s["grade"] for s in result["trajectory"] if "grade" in s],
                 "answer": result["answer"],
             },
             "llm": {
                 "calls": len(calls),
                 "agent_calls": sum(c["role"] == "agent" for c in calls),
                 "rewrite_calls": sum(c["role"] == "rewrite" for c in calls),
+                "grade_calls": sum(c["role"] == "grade" for c in calls),
                 "prompt_tokens": sum(c["prompt_tokens"] for c in calls),
                 "completion_tokens": sum(c["completion_tokens"] for c in calls),
                 "llm_ms": sum(c["ms"] for c in calls),
@@ -185,8 +190,8 @@ def run_agent_eval(items: list[dict], ids: dict, settings: dict, out: Path, limi
 
     print(f"{out.name}: {ids} {settings}  n={len(rows)}")
     summary(rows)
-    for key in ("calls", "agent_calls", "rewrite_calls", "prompt_tokens", "completion_tokens"):
-        print(f"  {key}/question={sum(r['llm'][key] for r in rows) / len(rows):.1f}")
+    for key in ("calls", "agent_calls", "rewrite_calls", "grade_calls", "prompt_tokens", "completion_tokens"):
+        print(f"  {key}/question={sum(r['llm'].get(key, 0) for r in rows) / len(rows):.1f}")
     print(f"  latency_ms median={statistics.median(r['latency_ms'] for r in rows):.0f}")
     outcomes = [r["agent"]["outcome"] for r in rows]
     print(f"  outcomes: { {o: outcomes.count(o) for o in set(outcomes)} }")
@@ -195,7 +200,7 @@ def run_agent_eval(items: list[dict], ids: dict, settings: dict, out: Path, limi
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("dataset", type=Path)
-    p.add_argument("--agent", action="store_true", help="run the ReAct agent (LLM calls)")
+    p.add_argument("--agent", action="store_true", help="run the LangGraph agent (LLM calls)")
     p.add_argument("--limit", type=int, help="--agent: at most N new questions (a pilot)")
     p.add_argument("--out", type=Path)
     args = p.parse_args()
@@ -216,7 +221,7 @@ def main() -> None:
         from src.agent.react_agent import MAX_ITERATIONS
         from src.llm.client import ACTIVE_MODEL, PIPELINE_PROVIDER
 
-        settings = {"chunk": f"{CHUNK_SIZE}/{CHUNK_OVERLAP}", "top_k": TOP_K, "agent": "react",
+        settings = {"chunk": f"{CHUNK_SIZE}/{CHUNK_OVERLAP}", "top_k": TOP_K, "agent": "langgraph-react-grade",
                     "llm": f"{PIPELINE_PROVIDER}/{ACTIVE_MODEL}", "max_iterations": MAX_ITERATIONS}
         out = args.out or ROOT / "eval" / "agent_results.json"
         return run_agent_eval(items, ids, settings, out, args.limit)

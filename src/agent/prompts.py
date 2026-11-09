@@ -37,6 +37,12 @@ Answer: <answer>
 """
 
 
+GRADE_SYSTEM = """\
+You check whether retrieved document chunks are relevant to a question.
+Reply "yes" if any chunk contains information that helps answer the question, otherwise "no".
+Reply with one word only: yes or no."""
+
+
 def format_tool_descriptions(tools: list[dict[str, Any]]) -> str:
     lines = []
     for tool in tools:

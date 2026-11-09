@@ -1,21 +1,28 @@
 # Agentic RAG
 
-An LLM agent decides when and what to search: it writes its own search queries, can search more than once, and answers from what the searches return. One of six RAG variants in a portfolio (Naive, Advanced, Production, Agentic, Graph, Multimodal) measured on the same corpus and dataset; the production system is [Personal-Knowledge-RAG](https://github.com/yashbhosale789/Personal-Knowledge-RAG).
+An LLM agent, built as a LangGraph state graph, decides when and what to search: it writes its own search queries, can search more than once, gets told when a search returned irrelevant chunks, and answers from what the searches return. One of six RAG variants in a portfolio (Naive, Advanced, Production, Agentic, Graph, Multimodal) measured on the same corpus and dataset; the production system is [Personal-Knowledge-RAG](https://github.com/yashbhosale789/Personal-Knowledge-RAG).
 
 ## Design
 
-Two agents over the same tools; the measured one is the hand-written ReAct agent.
+Two LangGraph agents over the same tools; the measured one is the ReAct graph.
+
+```text
+START -> agent --(Action)--> tools --(retrieve returned chunks)--> grade -> agent
+           |                   '--(other tool / nothing found)-----------> agent
+           '--(Answer, unparseable output, or 6 iterations)--> END
+```
 
 | Part | Choice |
 |---|---|
-| ReAct agent (`src/agent/react_agent.py`) | Text protocol `Thought / Action / Action Input / Observation / Answer`, parsed with regexes; one tool call per step |
-| Stop condition | an `Answer:` line, unparseable output, or 6 iterations (`MAX_ITERATIONS`) |
-| LangChain agent (`src/agent/langchain_agent.py`) | `langchain.agents.create_agent` (LangGraph tool calling), same tools; not measured |
+| ReAct graph (`src/agent/react_agent.py`) | LangGraph `StateGraph` with nodes `agent`, `tools`, `grade`. `agent` speaks the text protocol `Thought / Action / Action Input / Observation / Answer`, parsed with regexes; one tool call per step |
+| Grader (`grade` node) | after a `retrieve` that returned chunks, one LLM call answers yes/no "are these chunks relevant to the question?"; on no, a note asks the agent to search again with another query or say the knowledge base lacks it (corrective RAG) |
+| Stop condition | an `Answer:` line, unparseable output, or 6 agent steps (`MAX_ITERATIONS`); an action on the last step is not run |
+| LangChain agent (`src/agent/langchain_agent.py`) | `langchain.agents.create_agent` (prebuilt LangGraph tool calling), same tools, no grader; not measured |
 | Tool `retrieve` | LLM query rewrite → dense + BM25 → reciprocal rank fusion → cross-encoder rerank → top 5 chunk texts |
 | Tool `get_document_info` | document and chunk counts and the corpus domain, from `storage/chunks.json` (no LLM) |
 | LLM | Groq `llama-3.3-70b-versatile`, temperature 0.2, max 512 tokens (`PIPELINE_PROVIDER` / `AGENT_PROVIDER` in `config.py`); OpenRouter and Gemini are alternatives |
 
-LLM calls per question: one per agent step (at least 2: search, then answer) plus one rewrite per `retrieve` call, so at least 3 and at most 12 (6 steps that all search, then stop without an answer).
+LLM calls per question: one per agent step (at least 2: search, then answer) plus one rewrite and one grade per `retrieve` call that returns chunks, so at least 4 and at most 16 (6 steps that all search; the sixth search is not run).
 
 Retrieval stack (identical to the Advanced RAG variant):
 
@@ -42,7 +49,8 @@ echo GROQ_API_KEY=your_key > .env                # OPENROUTER_API_KEY / GEMINI_A
 # Index a corpus folder in place (default: data/documents). Delete storage/ before re-indexing:
 # chunks get random ids, so a second ingest duplicates them in Chroma.
 RAG_DATA_DIR=/path/to/corpus RAG_DATA_GLOB="*.pdf" python scripts/ingest.py
-python scripts/agentic_query.py      # asks for the agent (1 ReAct, 2 LangChain) and a question
+python scripts/agentic_query.py      # asks for the agent (1 LangGraph ReAct + grader, 2 LangChain) and a question
+python -m pytest tests                # graph routing with a stubbed LLM, no API key needed
 ```
 
 Evaluation (dataset: `eval/data/golden_dataset.json` of Personal-Knowledge-RAG, read by path):
@@ -54,7 +62,7 @@ python scripts/retrieval_eval.py <golden_dataset.json> --agent            # the 
 python scripts/compare.py eval/agent_results.json:agent_first <prod_results.json>:reranked recall@3 --family 6
 ```
 
-`eval/retrieval_results.json` holds the $0 run (stages dense, bm25, fused, reranked), `eval/agent_results.json` the agent run: per question the first search's top 5 (`agent_first`), everything the agent retrieved (`agent_all`, recall@all), the tool calls and queries, LLM calls and tokens, latency and the answer.
+`eval/retrieval_results.json` holds the $0 run (stages dense, bm25, fused, reranked), `eval/agent_results.json` the agent run: per question the first search's top 5 (`agent_first`), everything the agent retrieved (`agent_all`, recall@all), the tool calls and queries, grader verdicts, LLM calls (agent, rewrite, grade) and tokens, latency and the answer.
 
 ## Results (provisional)
 

@@ -22,8 +22,11 @@ python-dotenv
 # Evaluation (Phase 3)
 ragas
 
-# Agentic RAG (Phase 4)
+# Agentic RAG (Phase 4): the agent graph in src/agent/react_agent.py
 langgraph
+
+# Tests
+pytest
 # LangChain agent's chat models (src/agent/langchain_agent.py)
 langchain-groq
 langchain-openai
