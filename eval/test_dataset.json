@@ -1,0 +1,74 @@
+[
+  {
+    "id": "Q01",
+    "difficulty": "easy",
+    "question": "Where is the spare tyre located in an Aventro Sedan?",
+    "ground_truth": "In an Aventro Sedan, the spare tyre is located under the boot floor in the trunk."
+  },
+  {
+    "id": "Q02",
+    "difficulty": "easy",
+    "question": "Where is the toolkit stored in Aventro vehicles?",
+    "ground_truth": "In all Aventro models, the toolkit is usually secured next to the spare tyre or inside a side panel of the boot or trunk."
+  },
+  {
+    "id": "Q03",
+    "difficulty": "easy",
+    "question": "Where is the spare tyre located in an Aventro SUV?",
+    "ground_truth": "In an Aventro SUV, the spare tyre is located under the boot floor or mounted underneath the rear of the car."
+  },
+  {
+    "id": "Q04",
+    "difficulty": "medium",
+    "question": "What steps should I take to safely park before changing a tyre?",
+    "ground_truth": "You should pull over to a safe, flat location away from traffic, turn on your hazard lights, apply the handbrake, and place wheel wedges or blocks if available to prevent vehicle movement."
+  },
+  {
+    "id": "Q05",
+    "difficulty": "medium",
+    "question": "Why should lug nuts be loosened before using the jack?",
+    "ground_truth": "The lug nuts should be loosened while the tyre is still on the ground so that the vehicle's weight provides resistance, preventing the wheel from spinning when force is applied."
+  },
+  {
+    "id": "Q06",
+    "difficulty": "medium",
+    "question": "What is the correct way to tighten lug nuts after fitting the spare tyre?",
+    "ground_truth": "After fitting the spare tyre, the lug nuts should be tightened using a star pattern to ensure even pressure across the wheel."
+  },
+  {
+    "id": "Q07",
+    "difficulty": "medium",
+    "question": "How high should the vehicle be raised when using the jack?",
+    "ground_truth": "The vehicle should be raised until the flat tyre is about 6 inches above the ground."
+  },
+  {
+    "id": "Q08",
+    "difficulty": "medium",
+    "question": "What should I do after fitting the spare tyre before resuming normal driving?",
+    "ground_truth": "After fitting the spare tyre, you should drive slowly and get the spare tyre pressure checked at the nearest Aventro Service Center."
+  },
+  {
+    "id": "Q09",
+    "difficulty": "hard",
+    "question": "Is it safe to drive at highway speeds for a long distance using the spare tyre?",
+    "ground_truth": "No. Some spare tyres are space savers and are not intended for long distances or high speeds. You should drive slowly and visit an Aventro Service Center as soon as possible."
+  },
+  {
+    "id": "Q10",
+    "difficulty": "hard",
+    "question": "Does the spare tyre location differ between petrol and electric variants of the same Aventro model?",
+    "ground_truth": "No. All variants including Petrol, Diesel, Electric, and Hybrid follow the same compartment arrangement for the spare tyre and toolkit."
+  },
+  {
+    "id": "Q11",
+    "difficulty": "hard",
+    "question": "Which Aventro service center should I visit if I am in Hyderabad?",
+    "ground_truth": "The Aventro Service Center in Hyderabad is located in Banjara Hills."
+  },
+  {
+    "id": "Q12",
+    "difficulty": "trap",
+    "question": "What is the recommended tyre pressure for an Aventro Hatchback spare tyre?",
+    "ground_truth": "The document does not specify the recommended tyre pressure for any Aventro model. This information is not available in the tyre-changing guide."
+  }
+]

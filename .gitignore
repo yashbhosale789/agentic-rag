@@ -1,0 +1,76 @@
+.env
+*__pycache__/
+*.venv/
+**/__pycache__/
+**/.venv/
+**/venv/
+*.py[cod]
+
+# ==========================================
+# Environments & Secrets
+# ==========================================
+*.env
+.env
+**/.env
+
+# ==========================================
+# Ingestion Storage & Vector Databases
+# ==========================================
+**/storage/
+**/chroma/
+*.sqlite3
+chunks.json
+**/chunks.json
+
+# ==========================================
+# Stray CLI Artifacts
+# ==========================================
+git
+**/git
+python
+**/python
+
+# ==========================================
+# Large Datasets & DVC
+# ==========================================
+dataset/
+.dvc/
+.dvccache/
+
+# ==========================================
+# Python & Virtual Environments
+# ==========================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+**/.venv/
+venv/
+**/venv/
+env/
+**/env/
+
+# Testing & Linting
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ==========================================
+# IDE & System Files
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary Microsoft Office Files
+~$*.docx
+
+# ==========================================
+# Generated Evaluation Outputs (Optional)
+# ==========================================
+# Uncomment if evaluation results are dynamically generated and shouldn't be tracked:
+# **/eval_results.json
+# **/ragas_scores.json

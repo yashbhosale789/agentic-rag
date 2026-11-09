@@ -1,0 +1,30 @@
+# Core
+langchain
+langchain-community
+langchain-chroma
+langchain-core
+chromadb
+
+# Embeddings & Reranking (local)
+sentence-transformers
+
+# Sparse Retrieval
+rank-bm25
+
+# Document Loaders
+pypdf
+unstructured
+
+# LLM
+requests
+python-dotenv
+
+# Evaluation (Phase 3)
+ragas
+
+# Agentic RAG (Phase 4)
+langgraph
+# LangChain agent's chat models (src/agent/langchain_agent.py)
+langchain-groq
+langchain-openai
+langchain-google-genai
